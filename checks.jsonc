@@ -1,0 +1,581 @@
+{
+  // Source of truth for coverage. The coordinator materializes checks, tracks
+  // statuses, and blocks final answer on `UNRUN` for any mandatory applicable check.
+  "version": 2,
+  "status_model": {
+    "PASS": "Проверка выполнена; проблемы нет или форма признана допустимой.",
+    "FIXED": "Проблема была найдена, исправлена и успешно перепроверена.",
+    "FAIL": "Проблема остается или осознанно не исправлена; ее нужно вынести наружу.",
+    "N/A": "Проверка выполнена, но неприменима к текущему scope; причина обязательна.",
+    "UNRUN": "Проверка еще не выполнена. Блокер для обязательной и применимой проверки."
+  },
+  "final_answer_policy": {
+    "blockers": [
+      "Любой mandatory+applicable check со статусом UNRUN.",
+      "Любой N/A без явной причины.",
+      "Любой FIXED без rerun там, где rerun обязателен."
+    ],
+    "fail_policy": "FAIL допустим только как явно сообщенный наружу residual finding или риск.",
+    "uncertain_applicability": "Если применимость сомнительна, check сначала считается применимым и снимается только после inventory-pass.",
+    "examples_are_non_normative": true
+  },
+  "modes": {
+    "consultation": "Локальная консультация без review реального кода.",
+    "real-code": "Написание, правка или style-review реального кода.",
+    "skill-audit": "Аудит самого skill-а, его структуры и execution-контракта."
+  },
+  "scope_flags": {
+    "real_code": "В scope есть реальный код, а не только абстрактный вопрос.",
+    "writable_scope": "Агент может безопасно менять файлы или кодовый фрагмент.",
+    "whole_bsl_module": "В scope входит реальный `*.bsl`-модуль целиком.",
+    "bsl_code": "В scope есть BSL-код или изменяемый BSL-фрагмент.",
+    "bsl_whitespace_edit": "Правки затрагивают табы, пробелы или пустые строки внутри BSL-блока.",
+    "touched_methods": "Есть новые или измененные методы, требующие review сигнатуры/комментариев.",
+    "new_or_changed_module": "Создан или изменен реальный модуль как файл/верхний уровень.",
+    "changed_files": "После fix-pass есть реальные измененные файлы или diff.",
+    "has_query_text": "В scope есть `Запрос.Текст`, helper-ы запросов или SQL-like литералы запроса.",
+    "needs_doc_comments": "Есть затронутые методы, где комментарий обязателен или явно обсуждается.",
+    "orchestration_module": "Модуль реально является orchestration-модулем по признакам профиля.",
+    "legacy_or_external_boundary": "Есть поставщицкий код, расширение, legacy-перехват или внешний контракт/адаптация данных.",
+    "uses_subagents": "Для задачи реально используется subagent-flow.",
+    "topic_naming": "Вопрос пользователя касается именования.",
+    "topic_method_composition": "Вопрос касается декомпозиции, промежуточных значений или формы метода.",
+    "topic_call_layout": "Вопрос касается компактной/многострочной формы вызова или сигнатуры.",
+    "topic_bsl_formatting": "Вопрос касается BSL-форматирования, табов или пустых строк.",
+    "topic_doc_comments": "Вопрос касается doc-comments.",
+    "topic_query_text": "Вопрос касается `Запрос.Текст` и query-helper-ов.",
+    "topic_orchestration": "Вопрос касается orchestration-кода.",
+    "topic_behavior_safety": "Вопрос касается границы style-cleanup и поведения."
+  },
+  "owners": {
+    "coordinator": "Определяет режим, scope-флаги, coverage-plan и финальный sign-off.",
+    "inventory-scout": "Собирает scope-флаги и границы применимости checks.",
+    "structure-scout": "Проверяет верхний уровень модуля и export surface.",
+    "formatting-scout": "Проверяет BSL-форматирование, регистр операторов и локальную геометрию блока.",
+    "composition-scout": "Проверяет принципы, анти-overengineering, naming, composition и call-layout.",
+    "profile-scout": "Проверяет profile-паки: query-texts, orchestration, doc-comments.",
+    "behavior-guard-scout": "Проверяет риски неявного изменения поведения и legacy/external-contract boundaries.",
+    "single-writer": "Единственный исполнитель, который вносит кодовые правки.",
+    "final-verifier": "Закрывает rerun, verify, hard-gates и финальное coverage-summary."
+  },
+  "packs": [
+    {
+      "path": "references/principles.md",
+      "kind": "rule",
+      "default_owner": "composition-scout",
+      "tags": ["core", "universal"]
+    },
+    {
+      "path": "references/anti-overengineering.md",
+      "kind": "rule",
+      "default_owner": "composition-scout",
+      "tags": ["core", "universal"]
+    },
+    {
+      "path": "references/bsl-formatting.md",
+      "kind": "rule",
+      "default_owner": "formatting-scout",
+      "tags": ["format", "bsl"]
+    },
+    {
+      "path": "references/module-header.md",
+      "kind": "rule",
+      "default_owner": "structure-scout",
+      "tags": ["structure", "bsl"]
+    },
+    {
+      "path": "references/naming.md",
+      "kind": "rule",
+      "default_owner": "composition-scout",
+      "tags": ["naming", "universal"]
+    },
+    {
+      "path": "references/method-composition.md",
+      "kind": "rule",
+      "default_owner": "composition-scout",
+      "tags": ["composition", "bsl"]
+    },
+    {
+      "path": "references/call-layout.md",
+      "kind": "rule",
+      "default_owner": "composition-scout",
+      "tags": ["layout", "bsl"]
+    },
+    {
+      "path": "references/behavior-change-guard.md",
+      "kind": "rule",
+      "default_owner": "behavior-guard-scout",
+      "tags": ["safety", "core"]
+    },
+    {
+      "path": "references/doc-comments.md",
+      "kind": "rule",
+      "default_owner": "profile-scout",
+      "tags": ["docs", "bsl"]
+    },
+    {
+      "path": "references/review-feedback.md",
+      "kind": "rule",
+      "default_owner": "behavior-guard-scout",
+      "tags": ["legacy", "contract", "practice"]
+    },
+    {
+      "path": "profiles/query-texts.md",
+      "kind": "profile",
+      "default_owner": "profile-scout",
+      "tags": ["project-specific", "query"]
+    },
+    {
+      "path": "profiles/orchestration.md",
+      "kind": "profile",
+      "default_owner": "profile-scout",
+      "tags": ["project-specific", "orchestration"]
+    },
+    {
+      "path": "process/execution-model.md",
+      "kind": "process",
+      "default_owner": "coordinator",
+      "tags": ["coverage", "execution"]
+    },
+    {
+      "path": "process/subagent-contract.md",
+      "kind": "process",
+      "default_owner": "coordinator",
+      "tags": ["subagents", "execution"]
+    },
+    {
+      "path": "process/verify-recipes.md",
+      "kind": "process",
+      "default_owner": "final-verifier",
+      "tags": ["verify", "execution"]
+    },
+    {
+      "path": "process/hard-gates.md",
+      "kind": "process",
+      "default_owner": "final-verifier",
+      "tags": ["gates", "execution"]
+    },
+    {
+      "path": "process/review-heuristics.md",
+      "kind": "process",
+      "default_owner": "final-verifier",
+      "tags": ["heuristics", "execution"]
+    },
+    {
+      "path": "examples/few-shots.md",
+      "kind": "example",
+      "default_owner": "coordinator",
+      "tags": ["example", "non-normative"]
+    }
+  ],
+  "checks": [
+    {
+      "id": "COV-001",
+      "title": "Режим и scope-флаги определены до review",
+      "pack": "process/execution-model.md",
+      "owner": "coordinator",
+      "mandatory_for": ["consultation", "real-code", "skill-audit"],
+      "applies_if": "always",
+      "phase": ["inventory"],
+      "kind": "hard",
+      "autofix": false,
+      "rerun_after_fix": false
+    },
+    {
+      "id": "COV-002",
+      "title": "Required checks materialized из manifest-а, а не выбраны ad hoc",
+      "pack": "process/execution-model.md",
+      "owner": "coordinator",
+      "mandatory_for": ["consultation", "real-code", "skill-audit"],
+      "applies_if": "always",
+      "phase": ["inventory"],
+      "kind": "hard",
+      "autofix": false,
+      "rerun_after_fix": false
+    },
+    {
+      "id": "COV-003",
+      "title": "Все mandatory+applicable checks доведены до terminal status; UNRUN отсутствует",
+      "pack": "process/hard-gates.md",
+      "owner": "final-verifier",
+      "mandatory_for": ["consultation", "real-code", "skill-audit"],
+      "applies_if": "always",
+      "phase": ["report"],
+      "kind": "hard",
+      "autofix": false,
+      "rerun_after_fix": false
+    },
+    {
+      "id": "SUB-001",
+      "title": "Subagent-flow управляется координатором по единому coverage-plan",
+      "pack": "process/subagent-contract.md",
+      "owner": "coordinator",
+      "mandatory_for": ["consultation", "real-code", "skill-audit"],
+      "applies_if": "scope.uses_subagents",
+      "phase": ["inventory", "scan"],
+      "kind": "hard",
+      "autofix": false,
+      "rerun_after_fix": false
+    },
+    {
+      "id": "SUB-002",
+      "title": "Для subagent-flow соблюдены single-writer, дедупликация и merge-policy",
+      "pack": "process/subagent-contract.md",
+      "owner": "coordinator",
+      "mandatory_for": ["consultation", "real-code", "skill-audit"],
+      "applies_if": "scope.uses_subagents",
+      "phase": ["fix", "verify"],
+      "kind": "hard",
+      "autofix": false,
+      "rerun_after_fix": false
+    },
+    {
+      "id": "FIX-001",
+      "title": "Локальные детерминированные findings auto-fix-ятся, если scope допускает запись",
+      "pack": "process/execution-model.md",
+      "owner": "single-writer",
+      "mandatory_for": ["real-code"],
+      "applies_if": "scope.real_code && scope.writable_scope",
+      "phase": ["fix"],
+      "kind": "hard",
+      "autofix": true,
+      "rerun_after_fix": false
+    },
+    {
+      "id": "FIX-002",
+      "title": "После правок выполнен rerun затронутых checks",
+      "pack": "process/execution-model.md",
+      "owner": "final-verifier",
+      "mandatory_for": ["real-code"],
+      "applies_if": "scope.real_code && scope.changed_files",
+      "phase": ["rerun"],
+      "kind": "hard",
+      "autofix": false,
+      "rerun_after_fix": true
+    },
+    {
+      "id": "MOD-001",
+      "title": "Верхний уровень реального модуля проверен до анализа методов",
+      "pack": "references/module-header.md",
+      "owner": "structure-scout",
+      "mandatory_for": ["real-code"],
+      "applies_if": "scope.real_code && scope.whole_bsl_module",
+      "phase": ["scan"],
+      "kind": "hard",
+      "autofix": false,
+      "rerun_after_fix": false
+    },
+    {
+      "id": "MOD-002",
+      "title": "Шапка модуля, первая область и export surface приведены в корректную форму",
+      "pack": "references/module-header.md",
+      "owner": "structure-scout",
+      "mandatory_for": ["real-code"],
+      "applies_if": "scope.real_code && scope.whole_bsl_module",
+      "phase": ["scan", "fix"],
+      "kind": "hard",
+      "autofix": true,
+      "rerun_after_fix": true
+    },
+    {
+      "id": "PRN-001",
+      "title": "Применены базовые принципы локальной формы кода",
+      "pack": "references/principles.md",
+      "owner": "composition-scout",
+      "mandatory_for": ["consultation", "real-code"],
+      "applies_if": "scope.real_code || scope.topic_method_composition || scope.topic_naming || scope.topic_behavior_safety",
+      "phase": ["scan"],
+      "kind": "default",
+      "autofix": false,
+      "rerun_after_fix": false
+    },
+    {
+      "id": "OVG-001",
+      "title": "Проверено отсутствие лишнего overengineering",
+      "pack": "references/anti-overengineering.md",
+      "owner": "composition-scout",
+      "mandatory_for": ["consultation", "real-code"],
+      "applies_if": "scope.real_code || scope.topic_method_composition",
+      "phase": ["scan"],
+      "kind": "default",
+      "autofix": false,
+      "rerun_after_fix": false
+    },
+    {
+      "id": "FMT-001",
+      "title": "BSL-форматирование и tab-rhythm проверены",
+      "pack": "references/bsl-formatting.md",
+      "owner": "formatting-scout",
+      "mandatory_for": ["consultation", "real-code"],
+      "applies_if": "(scope.real_code && scope.bsl_code) || scope.topic_bsl_formatting",
+      "phase": ["scan", "fix"],
+      "kind": "hard",
+      "autofix": true,
+      "rerun_after_fix": true
+    },
+    {
+      "id": "FMT-002",
+      "title": "Канонический регистр логических операторов нормализован",
+      "pack": "references/bsl-formatting.md",
+      "owner": "formatting-scout",
+      "mandatory_for": ["real-code"],
+      "applies_if": "scope.real_code && scope.bsl_code",
+      "phase": ["scan", "fix"],
+      "kind": "hard",
+      "autofix": true,
+      "rerun_after_fix": true
+    },
+    {
+      "id": "NAM-001",
+      "title": "Проверены базовые naming-принципы, предметность и локальная читаемость имен",
+      "pack": "references/naming.md",
+      "owner": "composition-scout",
+      "mandatory_for": ["consultation", "real-code"],
+      "applies_if": "(scope.real_code && scope.bsl_code) || scope.topic_naming",
+      "phase": ["scan", "fix"],
+      "kind": "default",
+      "autofix": false,
+      "rerun_after_fix": true
+    },
+    {
+      "id": "CMP-001",
+      "title": "Декомпозиция метода и промежуточные значения проверены",
+      "pack": "references/method-composition.md",
+      "owner": "composition-scout",
+      "mandatory_for": ["consultation", "real-code"],
+      "applies_if": "(scope.real_code && scope.bsl_code) || scope.topic_method_composition",
+      "phase": ["scan", "fix"],
+      "kind": "default",
+      "autofix": false,
+      "rerun_after_fix": true
+    },
+    {
+      "id": "CMP-002",
+      "title": "Функции используют форму `ВозвращаемоеЗначение` и единый финальный `Возврат`",
+      "pack": "references/method-composition.md",
+      "owner": "composition-scout",
+      "mandatory_for": ["consultation", "real-code"],
+      "applies_if": "(scope.real_code && scope.touched_methods) || scope.topic_method_composition",
+      "phase": ["scan", "fix"],
+      "kind": "default",
+      "autofix": false,
+      "rerun_after_fix": true
+    },
+    {
+      "id": "CMP-003",
+      "title": "Колонночная форма длинных булевых выражений не разрушена механическим рефакторингом",
+      "pack": "references/method-composition.md",
+      "owner": "composition-scout",
+      "mandatory_for": ["consultation", "real-code"],
+      "applies_if": "(scope.real_code && scope.bsl_code) || scope.topic_method_composition",
+      "phase": ["scan", "fix"],
+      "kind": "default",
+      "autofix": false,
+      "rerun_after_fix": true
+    },
+    {
+      "id": "CMP-004",
+      "title": "В `Новый Структура(...)` не передается более одного значения",
+      "pack": "references/method-composition.md",
+      "owner": "composition-scout",
+      "mandatory_for": ["consultation", "real-code"],
+      "applies_if": "(scope.real_code && scope.bsl_code) || scope.topic_method_composition",
+      "phase": ["scan", "fix"],
+      "kind": "default",
+      "autofix": false,
+      "rerun_after_fix": true
+    },
+    {
+      "id": "CLL-001",
+      "title": "Форма вызовов и сигнатур проверена",
+      "pack": "references/call-layout.md",
+      "owner": "composition-scout",
+      "mandatory_for": ["consultation", "real-code"],
+      "applies_if": "(scope.real_code && scope.bsl_code) || scope.topic_call_layout",
+      "phase": ["scan", "fix"],
+      "kind": "default",
+      "autofix": false,
+      "rerun_after_fix": true
+    },
+    {
+      "id": "DOC-001",
+      "title": "Наличие и уместность doc-comments проверены для затронутых методов",
+      "pack": "references/doc-comments.md",
+      "owner": "profile-scout",
+      "mandatory_for": ["consultation", "real-code"],
+      "applies_if": "(scope.real_code && scope.touched_methods) || scope.topic_doc_comments",
+      "phase": ["scan", "fix"],
+      "kind": "default",
+      "autofix": false,
+      "rerun_after_fix": true
+    },
+    {
+      "id": "DOC-002",
+      "title": "Doc-block раскрывает контракт, а не placeholder",
+      "pack": "references/doc-comments.md",
+      "owner": "profile-scout",
+      "mandatory_for": ["real-code"],
+      "applies_if": "scope.real_code && scope.needs_doc_comments",
+      "phase": ["scan", "fix"],
+      "kind": "default",
+      "autofix": false,
+      "rerun_after_fix": true
+    },
+    {
+      "id": "QRY-001",
+      "title": "Query-text профиль проверен на helper-ы и область `ТекстыЗапросов`",
+      "pack": "profiles/query-texts.md",
+      "owner": "profile-scout",
+      "mandatory_for": ["consultation", "real-code"],
+      "applies_if": "(scope.real_code && scope.has_query_text) || scope.topic_query_text",
+      "phase": ["scan", "fix"],
+      "kind": "profile",
+      "autofix": false,
+      "rerun_after_fix": true
+    },
+    {
+      "id": "QRY-002",
+      "title": "Литерал query-helper-а и отступы после `|` проверены",
+      "pack": "profiles/query-texts.md",
+      "owner": "profile-scout",
+      "mandatory_for": ["real-code"],
+      "applies_if": "scope.real_code && scope.has_query_text",
+      "phase": ["scan", "fix", "verify"],
+      "kind": "profile",
+      "autofix": true,
+      "rerun_after_fix": true
+    },
+    {
+      "id": "ORC-001",
+      "title": "Orchestration-профиль применяется только к реальным orchestration-модулям",
+      "pack": "profiles/orchestration.md",
+      "owner": "profile-scout",
+      "mandatory_for": ["consultation", "real-code"],
+      "applies_if": "(scope.real_code && scope.orchestration_module) || scope.topic_orchestration",
+      "phase": ["scan"],
+      "kind": "profile",
+      "autofix": false,
+      "rerun_after_fix": false
+    },
+    {
+      "id": "ORC-002",
+      "title": "Стадии orchestration-метода и пустые строки между ними проверены",
+      "pack": "profiles/orchestration.md",
+      "owner": "profile-scout",
+      "mandatory_for": ["real-code"],
+      "applies_if": "scope.real_code && scope.orchestration_module",
+      "phase": ["scan", "fix"],
+      "kind": "profile",
+      "autofix": false,
+      "rerun_after_fix": true
+    },
+    {
+      "id": "FBK-001",
+      "title": "Legacy/external-contract heuristics применены к границам адаптации",
+      "pack": "references/review-feedback.md",
+      "owner": "behavior-guard-scout",
+      "mandatory_for": ["real-code"],
+      "applies_if": "scope.real_code && scope.legacy_or_external_boundary",
+      "phase": ["scan", "fix"],
+      "kind": "default",
+      "autofix": false,
+      "rerun_after_fix": true
+    },
+    {
+      "id": "SAF-001",
+      "title": "Behavior-change guard применен к реальным правкам и опасным маркерам diff-а",
+      "pack": "references/behavior-change-guard.md",
+      "owner": "behavior-guard-scout",
+      "mandatory_for": ["consultation", "real-code"],
+      "applies_if": "(scope.real_code && (scope.bsl_code || scope.changed_files)) || scope.topic_behavior_safety",
+      "phase": ["scan", "verify"],
+      "kind": "hard",
+      "autofix": false,
+      "rerun_after_fix": true
+    },
+    {
+      "id": "SAF-002",
+      "title": "Не введены необоснованные defensive/normalization-обертки и дрейф контракта",
+      "pack": "references/behavior-change-guard.md",
+      "owner": "behavior-guard-scout",
+      "mandatory_for": ["real-code"],
+      "applies_if": "scope.real_code && scope.bsl_code",
+      "phase": ["scan", "fix"],
+      "kind": "hard",
+      "autofix": false,
+      "rerun_after_fix": true
+    },
+    {
+      "id": "VRF-001",
+      "title": "Машинные verify-checks выполнены по каждому измененному файлу или честно задокументирован fallback",
+      "pack": "process/verify-recipes.md",
+      "owner": "final-verifier",
+      "mandatory_for": ["real-code"],
+      "applies_if": "scope.real_code && scope.changed_files",
+      "phase": ["verify"],
+      "kind": "hard",
+      "autofix": false,
+      "rerun_after_fix": false
+    },
+    {
+      "id": "VRF-002",
+      "title": "Judgement-verify выполнен по dangerous diff markers и границам контракта",
+      "pack": "process/verify-recipes.md",
+      "owner": "final-verifier",
+      "mandatory_for": ["real-code"],
+      "applies_if": "scope.real_code && scope.changed_files",
+      "phase": ["verify"],
+      "kind": "hard",
+      "autofix": false,
+      "rerun_after_fix": false
+    },
+    {
+      "id": "HGT-001",
+      "title": "Hard-gates пройдены перед финальным ответом",
+      "pack": "process/hard-gates.md",
+      "owner": "final-verifier",
+      "mandatory_for": ["consultation", "real-code", "skill-audit"],
+      "applies_if": "always",
+      "phase": ["report"],
+      "kind": "hard",
+      "autofix": false,
+      "rerun_after_fix": false
+    },
+    {
+      "id": "HUR-001",
+      "title": "Финальная эвристическая самопроверка выполнена",
+      "pack": "process/review-heuristics.md",
+      "owner": "final-verifier",
+      "mandatory_for": ["consultation", "real-code"],
+      "applies_if": "scope.real_code || scope.topic_naming || scope.topic_method_composition || scope.topic_call_layout || scope.topic_doc_comments || scope.topic_query_text || scope.topic_orchestration || scope.topic_bsl_formatting",
+      "phase": ["report"],
+      "kind": "default",
+      "autofix": false,
+      "rerun_after_fix": false
+    },
+    {
+      "id": "AUD-001",
+      "title": "Для skill-audit проверены согласованность manifest-а, pack-слоев и агентного конфига",
+      "pack": "process/execution-model.md",
+      "owner": "coordinator",
+      "mandatory_for": ["skill-audit"],
+      "applies_if": "always",
+      "phase": ["scan", "report"],
+      "kind": "hard",
+      "autofix": false,
+      "rerun_after_fix": false
+    },
+    {
+      "id": "RPT-001",
+      "title": "Финальный ответ содержит coverage-summary, автофиксы и residual FAIL/risks",
+      "pack": "process/hard-gates.md",
+      "owner": "coordinator",
+      "mandatory_for": ["consultation", "real-code", "skill-audit"],
+      "applies_if": "always",
+      "phase": ["report"],
+      "kind": "hard",
+      "autofix": false,
+      "rerun_after_fix": false
+    }
+  ]
+}

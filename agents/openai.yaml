@@ -1,0 +1,58 @@
+interface:
+  display_name: "1c-bsl-code-style"
+  short_description: "Полный BSL style-review; не v8std/БСП"
+  default_prompt: |
+    Используй $1c-bsl-code-style, когда нужно выбрать удачную локальную форму
+    1С/BSL-кода: декомпозицию, именование, промежуточные переменные,
+    уместность doc-comments, orchestration-паттерн или BSL-форматирование.
+
+    Начинай с `checks.jsonc` и `process/execution-model.md`.
+    Сначала определи режим: `consultation`, `real-code` или `skill-audit`.
+    Для самостоятельного `real-code` review сначала выполни
+    `full-reference-pass` по `references/*.md`, а bridge-файлы внутри
+    `references/` доведут до актуальных `profiles/`, `process/` и `examples/`.
+
+    Для real-code review coverage доказывается не каталогом файлов, а
+    manifest-ом:
+    - материализуй все checks, у которых `mandatory_for` включает `real-code`;
+    - зафиксируй scope-флаги и переведи каждую применимую проверку в
+      `PASS`, `FIXED`, `FAIL` или `N/A`;
+    - любой обязательный применимый `UNRUN` блокирует финальный ответ;
+    - сомнительную применимость нельзя тихо пропускать: сначала считай check
+      применимым, затем снимай через явный inventory-pass;
+    - `examples/few-shots.md` никогда не считается доказательством coverage.
+
+    Нормальный flow:
+    `inventory -> coverage-plan -> scan -> auto-fix deterministic findings -> rerun affected checks -> verify -> hard-gates -> report residuals`.
+
+    Для целого реального `*.bsl`-модуля сначала проверь верхний уровень файла по
+    `references/module-header.md`, затем методы.
+    При BSL-правках со whitespace обязателен `references/bsl-formatting.md`.
+    После реальных правок прогоняй `process/verify-recipes.md` и
+    `process/hard-gates.md`, затем `process/review-heuristics.md`.
+
+    Локальные детерминированные style-проблемы исправляй автоматически.
+    Пользователя спрашивай только для спорных или рискованных решений.
+    Если навык используется как companion-layer к реальному BSL-коду внутри
+    standards/BSP/внешнего pipeline, не упрощай его: закрывай полный
+    `real-code` coverage, rerun, verify и hard-gates.
+    В конфликте локальной формы кода с $1c-bsl-review-standards приоритет у
+    текущего skill-а; явное противоречие с v8std фиксируй как blocker/residual risk.
+    Логические операторы в изменяемом BSL-коде нормализуй к `Не`, `И`, `Или`.
+    Детальные правила `#std647` по именованию процедур и функций не дублируй:
+    текущий навык держит только базовые naming-принципы, а частные naming-case
+    при споре отправляет на `$1c-bsl-review-standards`.
+
+    Rule-паки:
+    - core: `references/principles.md`, `references/anti-overengineering.md`,
+      `references/behavior-change-guard.md`
+    - structure/format: `references/module-header.md`,
+      `references/bsl-formatting.md`, `references/naming.md`,
+      `references/method-composition.md`, `references/call-layout.md`,
+      `references/doc-comments.md`, `references/review-feedback.md`
+    - profiles: `profiles/query-texts.md`, `profiles/orchestration.md`
+    - process: `process/subagent-contract.md` при использовании субагентов
+    - examples: `examples/few-shots.md` только когда нужен короткий пример
+
+    Если пользователь просит формальное ревью по `v8std`, используй
+    `$1c-bsl-review-standards`, а не этот навык.
