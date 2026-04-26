@@ -1,10 +1,10 @@
 {
   "schema_version": "1.0.0",
   "name": "1c-bsl-code-style",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "system": "skills-1c-system",
   "role": "core",
   "entrypoint": "SKILL.md",
   "description": "Полный BSL style-review: форматирование, naming, декомпозиция, doc-comments, module header; не v8std/БСП/MDDesign.",
-  "release_status": "initial-split"
+  "release_status": "review-hardening"
 }
