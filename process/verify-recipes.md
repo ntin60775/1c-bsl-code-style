@@ -78,6 +78,27 @@ git diff -- <path>
 - diff содержит только intended изменения;
 - не появились случайные whitespace-изменения вне planned scope.
 
+## Tab-rhythm пустых строк BSL
+
+Если scope включает BSL-файл целиком или whitespace-правку внутри метода,
+обязательно запустите машинный guard пустых строк:
+
+```bash
+python3 -B scripts/check_bsl_blank_line_tab_rhythm.py <path>
+```
+
+Если guard нашёл нарушения и scope допускает запись, примените точечный fix-pass
+и сразу повторите проверку:
+
+```bash
+python3 -B scripts/check_bsl_blank_line_tab_rhythm.py --fix <path>
+python3 -B scripts/check_bsl_blank_line_tab_rhythm.py <path>
+```
+
+Эта проверка не заменяет judgement-pass по `references/bsl-formatting.md`, но
+закрывает минимальный машинный инвариант: пустая строка внутри
+`Процедура` / `Функция` не должна оставаться без tab-уровня текущего BSL-блока.
+
 ## Текст запроса
 
 Если в scope был `Запрос.Текст` или query-helper, дополнительно проверьте:

@@ -180,6 +180,11 @@ Execution-слой навыка:
 - `process/hard-gates.md`
 - `process/review-heuristics.md`
 
+### `scripts/`
+
+- `scripts/check_bsl_blank_line_tab_rhythm.py` — машинный guard и fix-pass для
+  пустых строк внутри BSL-методов.
+
 ### `examples/`
 
 Ненормативные примеры:
@@ -338,4 +343,5 @@ style-эвристики.
 - `process/verify-recipes.md` — машинные и judgment-проверки после edit-pass.
 - `process/hard-gates.md` — блокеры финального ответа.
 - `process/review-heuristics.md` — финальная эвристическая самопроверка.
+- `scripts/check_bsl_blank_line_tab_rhythm.py` — machine guard пустых строк внутри BSL-методов.
 - `examples/few-shots.md` — короткие примеры; читать выборочно.

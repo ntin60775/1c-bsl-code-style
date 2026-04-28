@@ -50,6 +50,8 @@
   задокументирован fallback.
 - Для query-text и BSL-formatting повторно закрыты соответствующие checks после
   верификации.
+- Для BSL-whitespace scope выполнен `scripts/check_bsl_blank_line_tab_rhythm.py`
+  или явно зафиксировано, почему машинный guard неприменим.
 - Diff проверен на лишние изменения вне intended scope.
 
 ## Отчет наружу
