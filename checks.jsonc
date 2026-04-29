@@ -386,6 +386,18 @@
       "rerun_after_fix": true
     },
     {
+      "id": "CMP-005",
+      "title": "Управляющий поток BSL остаётся линейным: вложенность `Если...Тогда` не глубже двух уровней",
+      "pack": "references/method-composition.md",
+      "owner": "composition-scout",
+      "mandatory_for": ["real-code"],
+      "applies_if": "scope.real_code && scope.bsl_code",
+      "phase": ["scan", "fix"],
+      "kind": "hard",
+      "autofix": true,
+      "rerun_after_fix": true
+    },
+    {
       "id": "CLL-001",
       "title": "Форма вызовов и сигнатур проверена",
       "pack": "references/call-layout.md",
