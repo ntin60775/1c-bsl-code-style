@@ -1,5 +1,22 @@
 # Журнал изменений
 
+## 0.3.0
+
+- Удалён процессный слой: `checks.jsonc`, `process/`, `agents/`,
+  субагентный контракт, owner-роли и coverage-manifest. Полнота применения
+  теперь обеспечивается короткой процедурой в `SKILL.md` и машинным guard-ом,
+  а не бюрократией покрытия.
+- `SKILL.md` сжат до маршрутизации, режимов, короткой процедуры `real-code` и
+  жёстких правил; примеры из `examples/few-shots.md` перенесены в канонические
+  rule-файлы, слой `examples/` и bridge-файлы в `references/` удалены.
+- Каждое правило теперь имеет один канонический дом: формулировки не
+  дублируются между `SKILL.md`, rule-паками и процессными файлами.
+- Новый единый машинный guard `scripts/bsl_style_check.py` (заменяет
+  `check_bsl_blank_line_tab_rhythm.py`). Check-id: `tab-rhythm`,
+  `operator-case`, `empty-ctor-parens`, `comma-space` (с `--fix`);
+  `struct-ctor-args`, `if-nesting`, `return-expression` (report-only).
+  Строковые литералы и комментарии пропускаются, BOM и CRLF сохраняются.
+
 ## 0.2.2
 
 - Закреплено правило линейного BSL-кода: для нового и изменяемого кода

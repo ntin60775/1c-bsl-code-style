@@ -1,6 +1,7 @@
 # Профиль: orchestration-код
 
-Этот файл — project-specific profile. Подключайте его только если inventory-pass подтвердил `orchestration_module`.
+Этот файл — project-specific profile. Подключайте его только если модуль
+действительно является orchestration-модулем по признакам ниже.
 
 ## Когда считать модуль orchestration-модулем
 
