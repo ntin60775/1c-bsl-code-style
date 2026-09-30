@@ -1,0 +1,33 @@
+{
+  "contract_version": 1,
+  "strategy": "replace",
+  "mappings": [
+    {
+      "from": "SKILL.md",
+      "to": ".zcode/skills/1c-bsl-code-style/SKILL.md"
+    },
+    {
+      "from": "references",
+      "to": ".zcode/skills/1c-bsl-code-style/references"
+    },
+    {
+      "from": "profiles",
+      "to": ".zcode/skills/1c-bsl-code-style/profiles"
+    },
+    {
+      "from": "scripts",
+      "to": ".zcode/skills/1c-bsl-code-style/scripts"
+    }
+  ],
+  "on_drift": "fail",
+  "preflight": [
+    {
+      "command": "python3 --version"
+    }
+  ],
+  "post_update": [
+    {
+      "say": "Пак стиля вендорен. Гейт bsl-style-gate контура 1c-zcode найдёт чекер в .zcode/skills/1c-bsl-code-style/scripts/ автоматически; если контура в проекте нет — чекер запускается вручную: python3 .zcode/skills/1c-bsl-code-style/scripts/bsl_style_check.py <пути>."
+    }
+  ]
+}
