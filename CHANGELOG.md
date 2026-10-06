@@ -1,5 +1,12 @@
 # Журнал изменений
 
+## 0.3.2
+
+- Убрано мёртвое правило AGENTS.md про `system.lock.json` в meta-репо
+  skills-1c-system: система дистрибуции заменена контуром 1c-zcode +
+  sot-zcode-marketplace, поле `system` удалено и из `skill.json`
+  (sot-zcode-marketplace#4). Контент навыка не менялся.
+
 ## 0.3.1
 
 - ZCode-манифест `.zcode-plugin/plugin.json` — репо плагина обязано нести
