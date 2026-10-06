@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "name": "1c-bsl-code-style",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "system": "skills-1c-system",
   "role": "core",
   "entrypoint": "SKILL.md",
