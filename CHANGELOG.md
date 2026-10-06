@@ -6,6 +6,8 @@
   skills-1c-system: система дистрибуции заменена контуром 1c-zcode +
   sot-zcode-marketplace, поле `system` удалено и из `skill.json`
   (sot-zcode-marketplace#4). Контент навыка не менялся.
+- `description` в `skill.json` синхронизирован с frontmatter `SKILL.md`
+  (разъехались ещё при приёме в маркетплейс — тест контракта это ловил).
 
 ## 0.3.1
 

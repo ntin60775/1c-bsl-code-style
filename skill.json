@@ -4,6 +4,6 @@
   "version": "0.3.2",
   "role": "core",
   "entrypoint": "SKILL.md",
-  "description": "Практический стиль 1С/BSL: форматирование, naming, декомпозиция, ветвление, doc-comments; не v8std/БСП.",
+  "description": "Практический стиль 1С/BSL: форматирование, naming, декомпозиция, ветвление, doc-comments; не v8std/БСП. Высший приоритет для формы кода в контуре 1С: замечания стандартов и стат-анализа ему не противоречат.",
   "release_status": "slim-contract"
 }
