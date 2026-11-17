@@ -344,6 +344,8 @@ def _check_operator_case(path: Path, lines: list[str], spans: list[list[tuple[in
     violations: list[Violation] = []
     for index, (raw, line_spans) in enumerate(zip(lines, spans)):
         body, _ = _strip_newline(raw)
+        if _statement_text(body).startswith("#"):
+            continue
         bad: list[str] = []
         for segment in _spans_of_line(body, line_spans):
             for match in _OPERATOR_RE.finditer(segment):
@@ -648,6 +650,8 @@ def analyze_path(path: Path, checks: set[str] | None = None, fix: bool = False) 
             spans, literal_line = _code_spans(lines)
             for index, (raw_line, line_spans) in enumerate(zip(lines, spans)):
                 body, newline = _strip_newline(raw_line)
+                if _statement_text(body).startswith("#"):
+                    continue
                 rebuilt: list[str] = []
                 pos = 0
                 for start, end in line_spans:
@@ -691,6 +695,8 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     selected = {item.strip() for item in args.checks.split(",") if item.strip()}
+    if not selected:
+        parser.error("пустой набор проверок: --checks требует хотя бы один check-id")
     unknown = selected - set(CHECK_IDS)
     if unknown:
         parser.error(f"неизвестные check-id: {', '.join(sorted(unknown))}")
