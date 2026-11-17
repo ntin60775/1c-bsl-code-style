@@ -5,7 +5,7 @@
 - Это отдельный git repo навыка `1c-bsl-code-style`.
 - Не редактировать соседние skill repo и meta repo без явного scope.
 - После изменения публичного контракта обновить `VERSION`, `CHANGELOG.md`,
-  `skill.json` и `.zcode-plugin/plugin.json`.
+  `skill.json` и `deploy.json`.
 
 ## Структура
 

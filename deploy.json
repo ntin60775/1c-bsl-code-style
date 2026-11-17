@@ -4,19 +4,19 @@
   "mappings": [
     {
       "from": "SKILL.md",
-      "to": ".zcode/skills/1c-bsl-code-style/SKILL.md"
+      "to": ".dsh/1c/skills/1c-bsl-code-style/SKILL.md"
     },
     {
       "from": "references",
-      "to": ".zcode/skills/1c-bsl-code-style/references"
+      "to": ".dsh/1c/skills/1c-bsl-code-style/references"
     },
     {
       "from": "profiles",
-      "to": ".zcode/skills/1c-bsl-code-style/profiles"
+      "to": ".dsh/1c/skills/1c-bsl-code-style/profiles"
     },
     {
       "from": "scripts",
-      "to": ".zcode/skills/1c-bsl-code-style/scripts"
+      "to": ".dsh/1c/skills/1c-bsl-code-style/scripts"
     }
   ],
   "on_drift": "fail",
@@ -27,7 +27,7 @@
   ],
   "post_update": [
     {
-      "say": "Пак стиля вендорен. Гейт bsl-style-gate контура 1c-zcode найдёт чекер в .zcode/skills/1c-bsl-code-style/scripts/ автоматически; если контура в проекте нет — чекер запускается вручную: python3 .zcode/skills/1c-bsl-code-style/scripts/bsl_style_check.py <пути>."
+      "say": "Пак стиля вендорен в .dsh/1c/skills/1c-bsl-code-style; пресет 1c контура DSH поднимает его как скилл сессии. Гейт bsl-style-gate находит чекер по contour.json → style.pack; вне контура — python3 .dsh/1c/skills/1c-bsl-code-style/scripts/bsl_style_check.py <пути>."
     }
   ]
 }
